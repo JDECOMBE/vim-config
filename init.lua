@@ -87,8 +87,8 @@ P.S. You can delete this when you're done too. It's your config now! :)
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+-- vim.g.mapleader = ' '
+-- vim.g.maplocalleader = ' '
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -99,7 +99,7 @@ vim.g.maplocalleader = ' '
 vim.opt.number = true
 -- You can also add relative line numbers, for help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -114,6 +114,9 @@ vim.opt.clipboard = 'unnamedplus'
 
 -- Enable break indent
 vim.opt.breakindent = true
+
+-- Tab set to 4 space long instead of 8
+vim.opt.tabstop = 4
 
 -- Save undo history
 vim.opt.undofile = true
@@ -137,7 +140,7 @@ vim.opt.splitbelow = true
 --  See `:help 'list'`
 --  and `:help 'listchars'`
 vim.opt.list = true
-vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+vim.opt.listchars = { tab = '  ', trail = '·', nbsp = '␣' }
 
 -- Preview substitutions live, as you type!
 vim.opt.inccommand = 'split'
@@ -148,11 +151,16 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+-- folding
+vim.opt.foldmethod = 'expr'
+vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
+vim.opt.foldenable = false
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
-vim.opt.hlsearch = true
+vim.opt.hlsearch = false
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
@@ -160,6 +168,25 @@ vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>G', '<cmd>LazyGit<cr>', { desc = 'Opens LazyGit', silent = true })
+
+vim.keymap.set('n', '<leader>T', function()
+  require('neo-tree.command').execute {
+    action = 'focus',      -- OPTIONAL, this is the default value
+    source = 'filesystem', -- OPTIONAL, this is the default value
+    position = 'left',     -- OPTIONAL, this is the default value
+    toggle = true,
+  }
+end, { desc = 'Open neo-tree at current file or working directory' })
+
+vim.keymap.set('n', '<leader>cf', function()
+  vim.fn.setreg('+', vim.fn.expand('%:p'))
+  print('Copied "' .. vim.fn.expand('%:p') .. '" to the clipboard')
+end)
+
+vim.api.nvim_create_user_command('Term', function()
+  vim.cmd('tabnew term://powershell')
+end, {})
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -179,10 +206,10 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 --  Use CTRL+<hjkl> to switch between windows
 --
 --  See `:help wincmd` for a list of all window commands
-vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+-- vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
+-- vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
+-- vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
+-- vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -231,8 +258,15 @@ require('lazy').setup {
   --  This is equivalent to:
   --    require('Comment').setup({})
 
-  -- "gc" to comment visual regions/lines
-  { 'numToStr/Comment.nvim', opts = {} },
+  -- "" to comment visual regions/lines
+  { 'numToStr/Comment.nvim', opts = {
+    toggler = {
+      line = '<leader>kcc',
+    },
+    opleader = {
+      line = '<leader>kc',
+    },
+  } },
 
   -- Here is a more advanced example where we pass configuration
   -- options to `gitsigns.nvim`. This is equivalent to the following lua:
@@ -267,7 +301,7 @@ require('lazy').setup {
   -- after the plugin has been loaded:
   --  config = function() ... end
 
-  { -- Useful plugin to show you pending keybinds.
+  {                     -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
     event = 'VimEnter', -- Sets the loading event to 'VimEnter'
     config = function() -- This is the function that runs, AFTER loading
@@ -363,15 +397,11 @@ require('lazy').setup {
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
-      vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
-      vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
-      vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
-      vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
-      vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
-      vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
-      vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
+      vim.keymap.set('n', 'T', builtin.find_files, { desc = 'Find files' })
+      vim.keymap.set('n', 'f', builtin.current_buffer_fuzzy_find, { desc = 'Search in current buffer' })
+      vim.keymap.set('n', 'F', builtin.live_grep, { desc = 'Search by grep' })
+      vim.keymap.set('n', '<leader>g', builtin.diagnostics, { desc = 'Open diagnostics' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-      vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -463,28 +493,28 @@ require('lazy').setup {
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
-          map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+          -- map('gy', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
 
           -- Jump to the type of the word under your cursor.
           --  Useful when you're not sure what type a variable is and you want to see
           --  the definition of its *type*, not where it was *defined*.
-          map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
-
-          -- Fuzzy find all the symbols in your current document.
-          --  Symbols are things like variables, functions, types, etc.
-          map('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
+          map('gy', require('telescope.builtin').lsp_type_definitions, 'Type definition')
 
           -- Fuzzy find all the symbols in your current workspace
           --  Similar to document symbols, except searches over your whole project.
-          map('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+          map('t', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
 
           -- Rename the variable under your cursor
           --  Most Language Servers support renaming across files, etc.
-          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+          map('<leader>f', vim.lsp.buf.format, '[F]ormat')
+
+          -- Rename the variable under your cursor
+          --  Most Language Servers support renaming across files, etc.
+          map('<leader>rn', vim.lsp.buf.rename, '[r]e[n]ame')
 
           -- Execute a code action, usually your cursor needs to be on top of an error
           -- or a suggestion from your LSP for this to activate.
-          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+          map('<leader>ac', vim.lsp.buf.code_action, '[c]ode [a]ction')
 
           -- Opens a popup that displays documentation about the word under your cursor
           --  See `:help K` for why this keymap
@@ -531,7 +561,11 @@ require('lazy').setup {
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {},
+        csharp_ls = {},
+        asm_lsp = {},
+        cmake = {},
+        html = {},
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -603,24 +637,16 @@ require('lazy').setup {
     end,
   },
 
-  { -- Autoformat
-    'stevearc/conform.nvim',
-    opts = {
-      notify_on_error = false,
-      format_on_save = {
-        timeout_ms = 500,
-        lsp_fallback = true,
-      },
-      formatters_by_ft = {
-        lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use a sub-list to tell conform to run *until* a formatter
-        -- is found.
-        -- javascript = { { "prettierd", "prettier" } },
-      },
-    },
+  { -- Outline
+    'hedyhli/outline.nvim',
+    config = function()
+      -- Example mapping to toggle outline
+      vim.keymap.set("n", "<leader>o", "<cmd>Outline<CR>", { desc = "Toggle Outline" })
+
+      require("outline").setup {
+        -- Your setup opts here (leave empty to use defaults)
+      }
+    end,
   },
 
   { -- Autocompletion
@@ -681,7 +707,7 @@ require('lazy').setup {
           -- Accept ([y]es) the completion.
           --  This will auto-import if your LSP supports it.
           --  This will expand snippets if the LSP sent a snippet.
-          ['<C-y>'] = cmp.mapping.confirm { select = true },
+          ['<TAB>'] = cmp.mapping.confirm { select = true },
 
           -- Manually trigger a completion from nvim-cmp.
           --  Generally you don't need this, because nvim-cmp will display
@@ -696,12 +722,12 @@ require('lazy').setup {
           --
           -- <c-l> will move you to the right of each of the expansion locations.
           -- <c-h> is similar, except moving you backwards.
-          ['<C-l>'] = cmp.mapping(function()
+          ['<C-j>'] = cmp.mapping(function()
             if luasnip.expand_or_locally_jumpable() then
               luasnip.expand_or_jump()
             end
           end, { 'i', 's' }),
-          ['<C-h>'] = cmp.mapping(function()
+          ['<C-k>'] = cmp.mapping(function()
             if luasnip.locally_jumpable(-1) then
               luasnip.jump(-1)
             end
@@ -721,12 +747,22 @@ require('lazy').setup {
     -- change the command in the config to whatever the name of that colorscheme is
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`
-    'folke/tokyonight.nvim',
-    lazy = false, -- make sure we load this during startup if it is your main colorscheme
+    -- 'folke/tokyonight.nvim',
+    -- 'ellisonleao/gruvbox.nvim',
+    'Mofiqul/vscode.nvim',
     priority = 1000, -- make sure to load this before all the other start plugins
     config = function()
-      -- Load the colorscheme here
-      vim.cmd.colorscheme 'tokyonight-night'
+      require('vscode').setup {
+        italic_comments = false,
+        underline_links = true,
+      }
+    end,
+
+    init = function()
+      -- Load the colorscheme here.
+      -- Like many other themes, this one has different styles, and you could load
+      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+      vim.cmd.colorscheme 'vscode'
 
       -- You can configure highlights by doing something like
       vim.cmd.hi 'Comment gui=none'
@@ -785,7 +821,7 @@ require('lazy').setup {
         -- Autoinstall languages that are not installed
         auto_install = true,
         highlight = { enable = true },
-        indent = { enable = true },
+        indent = { enable = false },
       }
 
       -- There are additional nvim-treesitter modules that you can use to interact
@@ -796,6 +832,215 @@ require('lazy').setup {
       --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
     end,
   },
+  {
+    'nvim-neo-tree/neo-tree.nvim',
+    branch = 'v3.x',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
+      'MunifTanjim/nui.nvim',
+      -- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
+    },
+  },
+  {
+    'ellisonleao/glow.nvim',
+    config = function()
+      require('glow').setup({
+        style = "dark",
+        install_path = "/opt/homebrew/bin",
+        glow_path = "/opt/homebrew/bin/glow",
+        width = 9999,
+        height = 9999,
+        width_ratio = 0.9,
+        height_ratio = 0.9,
+      })
+    end
+  },
+  {
+    'kdheepak/lazygit.nvim',
+    cmd = {
+      'LazyGit',
+      'LazyGitConfig',
+      'LazyGitCurrentFile',
+      'LazyGitFilter',
+      'LazyGitFilterCurrentFile',
+    },
+    -- optional for floating window border decoration
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+    },
+  },
+  {
+    'mfussenegger/nvim-dap',
+    config = function()
+      vim.keymap.set('n', '<F5>', function() require('dap').continue() end)
+      vim.keymap.set('n', '<F10>', function() require('dap').step_over() end)
+      vim.keymap.set('n', '<F11>', function() require('dap').step_into() end)
+      vim.keymap.set('n', '<F12>', function() require('dap').step_out() end)
+      vim.keymap.set('n', '<Leader>b', function() require('dap').toggle_breakpoint() end)
+      vim.keymap.set('n', '<Leader>B', function() require('dap').set_breakpoint() end)
+      vim.keymap.set('n', '<Leader>lp',
+        function() require('dap').set_breakpoint(nil, nil, vim.fn.input('Log point message: ')) end)
+      vim.keymap.set('n', '<Leader>dr', function() require('dap').repl.open() end)
+      vim.keymap.set('n', '<Leader>dl', function() require('dap').run_last() end)
+      vim.keymap.set({ 'n', 'v' }, '<Leader>dh', function()
+        require('dap.ui.widgets').hover()
+      end)
+      vim.keymap.set({ 'n', 'v' }, '<Leader>dp', function()
+        require('dap.ui.widgets').preview()
+      end)
+      vim.keymap.set('n', '<Leader>df', function()
+        local widgets = require('dap.ui.widgets')
+        widgets.centered_float(widgets.frames)
+      end)
+      vim.keymap.set('n', '<Leader>ds', function()
+        local widgets = require('dap.ui.widgets')
+        widgets.centered_float(widgets.scopes)
+      end)
+
+
+      local dap, dapui = require("dap"), require("dapui")
+
+      -- CSHARP
+      dap.adapters.coreclr = {
+        type = 'executable',
+        command = '/Users/jeremiahdecombe/DevPerso/netcoredbg/bin/netcoredbg',
+        args = { '--interpreter=vscode' }
+      }
+
+      dap.configurations.cs = {
+        {
+          type = "coreclr",
+          name = "launch - netcoredbg",
+          request = "launch",
+          program = function()
+            return vim.fn.input('Path to dll: ', vim.fn.getcwd() .. '/bin/Debug/', 'file')
+          end,
+        },
+      }
+
+      -- C/C++/Rush
+      dap.adapters.lldb = {
+        type = 'executable',
+        command = '/opt/homebrew/opt/llvm/bin/lldb-vscode', -- adjust as needed, must be absolute path
+        name = 'lldb'
+      }
+
+      dap.configurations.c = {
+        {
+          name = 'Launch',
+          type = 'lldb',
+          request = 'launch',
+          program = function()
+            return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+          end,
+          cwd = '${workspaceFolder}/build',
+          stopOnEntry = false,
+          args = {},
+        },
+      }
+
+
+
+      dapui.setup({
+        force_buffers = true,
+        icons = { expanded = "▾", collapsed = "▸", current_frame = "▸" },
+        mappings = {
+          -- Use a table to apply multiple mappings
+          expand = { "<CR>", "<2-LeftMouse>" },
+          open = "o",
+          remove = "d",
+          edit = "e",
+          repl = "r",
+          toggle = "t",
+        },
+        -- Use this to override mappings for specific elements
+        element_mappings = {
+          -- Example:
+          -- stacks = {
+          --   open = "<CR>",
+          --   expand = "o",
+          -- }
+        },
+        -- Expand lines larger than the window
+        -- Requires >= 0.7
+        expand_lines = vim.fn.has("nvim-0.7") == 1,
+        -- Layouts define sections of the screen to place windows.
+        -- The position can be "left", "right", "top" or "bottom".
+        -- The size specifies the height/width depending on position. It can be an Int
+        -- or a Float. Integer specifies height/width directly (i.e. 20 lines/columns) while
+        -- Float value specifies percentage (i.e. 0.3 - 30% of available lines/columns)
+        -- Elements are the elements shown in the layout (in order).
+        -- Layouts are opened in order so that earlier layouts take priority in window sizing.
+        layouts = {
+          {
+            elements = {
+              -- Elements can be strings or table with id and size keys.
+              "breakpoints",
+              "stacks",
+              "watches",
+            },
+            size = 40, -- 40 columns
+            position = "left",
+          },
+          {
+            elements = {
+              "repl",
+              "scopes",
+            },
+            size = 0.25, -- 25% of total lines
+            position = "bottom",
+          },
+        },
+        controls = {
+          -- Requires Neovim nightly (or 0.8 when released)
+          enabled = false,
+          -- Display controls in this element
+          element = "repl",
+          icons = {
+            pause = "",
+            play = "",
+            step_into = "",
+            step_over = "",
+            step_out = "",
+            step_back = "",
+            run_last = "↻",
+            terminate = "□",
+          },
+        },
+        floating = {
+          max_height = nil,   -- These can be integers or a float between 0 and 1.
+          max_width = nil,    -- Floats will be treated as percentage of your screen.
+          border = "rounded", -- Border style. Can be "single", "double" or "rounded"
+          mappings = {
+            close = { "q", "<Esc>" },
+          },
+        },
+        windows = { indent = 1 },
+        render = {
+          indent = 1,
+          max_type_length = nil, -- Can be integer or nil.
+          max_value_lines = 100, -- Can be integer or nil.
+        }
+      })
+
+
+      dap.listeners.after.event_initialized["dapui_config"] = function()
+        dapui.open()
+      end
+      dap.listeners.before.event_terminated["dapui_config"] = function()
+        dapui.close()
+      end
+      dap.listeners.before.event_exited["dapui_config"] = function()
+        dapui.close()
+      end
+    end,
+
+    dependencies = {
+      'rcarriga/nvim-dap-ui',
+      'nvim-neotest/nvim-nio'
+    }
+  }
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
