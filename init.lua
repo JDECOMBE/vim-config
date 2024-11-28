@@ -163,6 +163,10 @@ vim.opt.foldenable = false
 vim.opt.hlsearch = false
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
+-- ensure selected text does not override copy register when pasting over it
+vim.keymap.set("x", "p", function() return 'pgv"' .. vim.v.register .. "y" end, { remap = false, expr = true })
+vim.keymap.set("x", "P", function() return 'Pgv"' .. vim.v.register .. "y" end, { remap = false, expr = true })
+
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
@@ -302,18 +306,18 @@ require('lazy').setup({
       require('which-key').setup()
 
       -- Document existing key chains
-      require('which-key').register {
-        ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-        ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-        ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-        ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-        ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
-        ['<leader>h'] = { name = 'Git [H]unk', _ = 'which_key_ignore' },
+      require('which-key').add {
+        { '<leader>c', desc = '[C]ode', },
+        { '<leader>d', desc = '[D]ocument', },
+        { '<leader>r', desc = '[R]ename', },
+        { '<leader>s', desc = '[S]earch', },
+        { '<leader>w', desc = '[W]orkspace', },
+        { '<leader>t', desc = '[T]oggle', },
+        { '<leader>h', desc = 'Git [H]unk', },
       }
       -- visual mode
-      require('which-key').register({
-        ['<leader>h'] = { 'Git [H]unk' },
+      require('which-key').add({
+        { '<leader>h', desc = 'Git [H]unk' },
       }, { mode = 'v' })
     end,
   },
@@ -332,6 +336,7 @@ require('lazy').setup({
     dependencies = {
       'nvim-lua/plenary.nvim',
       { -- If encountering errors, see telescope-fzf-native README for installation instructions
+        'JDECOMBE/csharpls-extended-lsp.nvim',
         'nvim-telescope/telescope-fzf-native.nvim',
 
         -- `build` is used to run some command when the plugin is installed/updated.
@@ -346,8 +351,10 @@ require('lazy').setup({
       },
       { 'nvim-telescope/telescope-ui-select.nvim' },
 
-      -- Useful for getting pretty icons, but requires a Nerd Font.
-      { 'nvim-tree/nvim-web-devicons',            enabled = vim.g.have_nerd_font },
+      -- Useful for getting pretty icons, but requires special font.
+      --  If you already have a Nerd Font, or terminal set up with fallback fonts
+      --  you can enable this
+      -- { 'nvim-tree/nvim-web-devicons' }
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -388,9 +395,11 @@ require('lazy').setup({
         },
       }
 
-      -- Enable Telescope extensions if they are installed
+
+      -- Enable telescope extensions, if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require("telescope").load_extension, 'csharpls_definition')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -400,6 +409,7 @@ require('lazy').setup({
       vim.keymap.set('n', 'F', builtin.live_grep, { desc = 'Search by grep' })
       vim.keymap.set('n', '<leader>g', builtin.diagnostics, { desc = 'Open diagnostics' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
+      vim.keymap.set('n', '<leader>i', builtin.lsp_implementations, { desc = 'Open [I]mplementations' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -433,6 +443,8 @@ require('lazy').setup({
       { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
       'williamboman/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
+      'JDECOMBE/csharpls-extended-lsp.nvim',
+      'nvim-telescope/telescope.nvim',
 
       -- Useful status updates for LSP.
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
@@ -477,6 +489,7 @@ require('lazy').setup({
         callback = function(event)
           -- NOTE: Remember that Lua is a real programming language, and as such it is possible
           -- to define small helper and utility functions so you don't have to repeat yourself.
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
           --
           -- In this case, we create a function that lets us more easily define mappings specific
           -- for LSP related items. It sets the mode, buffer and description for us each time.
@@ -486,8 +499,12 @@ require('lazy').setup({
 
           -- Jump to the definition of the word under your cursor.
           --  This is where a variable was first declared, or where a function is defined, etc.
-          --  To jump back, press <C-t>.
-          map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+          --  To jump back, press <C-T>.
+          if client.name == 'csharp_ls' then
+            map('gd', require('telescope').extensions.csharpls_definition.csharpls_definition, '[G]oto [D]efinition')
+          else
+            map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+          end
 
           -- Find references for the word under your cursor.
           map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
@@ -499,7 +516,7 @@ require('lazy').setup({
           -- Jump to the type of the word under your cursor.
           --  Useful when you're not sure what type a variable is and you want to see
           --  the definition of its *type*, not where it was *defined*.
-          map('gy', require('telescope.builtin').lsp_type_definitions, 'Type definition')
+          map('gy', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
 
           -- Fuzzy find all the symbols in your current workspace
           --  Similar to document symbols, except searches over your whole project.
@@ -524,6 +541,7 @@ require('lazy').setup({
           -- WARN: This is not Goto Definition, this is Goto Declaration.
           --  For example, in C this would take you to the header.
           map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+
 
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
@@ -586,8 +604,16 @@ require('lazy').setup({
         clangd = {},
         csharp_ls = {},
         asm_lsp = {},
+        csharp_ls = {
+          handlers = {
+            ["textDocument/definition"] = require('csharpls_extended').handler,
+            ["textDocument/typeDefinition"] = require('csharpls_extended').handler,
+          },
+        },
         cmake = {},
         html = {},
+        jsonls = {},
+        lemminx = {},
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -602,7 +628,7 @@ require('lazy').setup({
 
         lua_ls = {
           -- cmd = {...},
-          -- filetypes = { ...},
+          -- filetypes { ...},
           -- capabilities = {},
           settings = {
             Lua = {
@@ -1079,8 +1105,8 @@ require('lazy').setup({
             },
           },
           floating = {
-            max_height = nil, -- These can be integers or a float between 0 and 1.
-            max_width = nil,  -- Floats will be treated as percentage of your screen.
+            max_height = nil,   -- These can be integers or a float between 0 and 1.
+            max_width = nil,    -- Floats will be treated as percentage of your screen.
             border = "rounded", -- Border style. Can be "single", "double" or "rounded"
             mappings = {
               close = { "q", "<Esc>" },
