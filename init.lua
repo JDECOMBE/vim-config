@@ -167,6 +167,11 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set("x", "p", function() return 'pgv"' .. vim.v.register .. "y" end, { remap = false, expr = true })
 vim.keymap.set("x", "P", function() return 'Pgv"' .. vim.v.register .. "y" end, { remap = false, expr = true })
 
+-- Set QuickFix List keybinds
+vim.keymap.set('n', 'co', '<cmd>cope<CR>')
+vim.keymap.set('n', 'c[', '<cmd>cn<CR>')
+vim.keymap.set('n', 'c]', '<cmd>cp<CR>')
+
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' })
@@ -497,13 +502,26 @@ require('lazy').setup({
             vim.keymap.set('n', keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end
 
-          -- Jump to the definition of the word under your cursor.
-          --  This is where a variable was first declared, or where a function is defined, etc.
-          --  To jump back, press <C-T>.
-          if client.name == 'csharp_ls' then
-            map('gd', require('telescope').extensions.csharpls_definition.csharpls_definition, '[G]oto [D]efinition')
-          else
-            map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+          map('gb', function()
+            vim.cmd('make')
+          end, '[B]uild')
+
+          map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+
+          -- Setup client specific stuff
+          if client ~= nil then
+            -- Setup Build
+            if client.name == 'csharp_ls' then
+              -- vim.g.dotnet_errors_only = true
+              vim.cmd('compiler dotnet')
+
+              -- override go to definition with csharp_ls extended for decompilation
+              map('gd', require('telescope').extensions.csharpls_definition.csharpls_definition, '[G]oto [D]efinition')
+            end
+
+            if client.name == 'rust_analyzer' then
+              vim.cmd('compiler rustc')
+            end
           end
 
           -- Find references for the word under your cursor.
