@@ -873,6 +873,9 @@ require('lazy').setup({
 
         -- You can configure highlights by doing something like:
         vim.cmd.hi 'Comment gui=none'
+
+        -- Fix neo-tree preview that changes background color
+        vim.cmd.hi 'NormalFloat guibg=Normal'
       end,
     },
 
