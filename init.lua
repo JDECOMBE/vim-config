@@ -1200,6 +1200,9 @@ require('lazy').setup({
         'nvim-neotest/nvim-nio'
       }
     }
+  },
+  {
+    'sindrets/diffview.nvim'
   }
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
