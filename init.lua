@@ -515,21 +515,40 @@ require('lazy').setup({
             end
           end
 
+          local telescope_opts = {
+            layout_strategy = 'vertical',
+            layout_config = {
+              width = 0.90
+            },
+            fname_width = 75,
+            include_declaration=false,
+            -- show_line=false,
+            trim_text=true
+          }
+
           -- Find references for the word under your cursor.
-          map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+          map('gr', function()
+            require('telescope.builtin').lsp_references(telescope_opts)
+          end, '[G]oto [R]eferences')
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
-          -- map('gy', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
+          map('gi', function()
+            require('telescope.builtin').lsp_implementations(telescope_opts)
+          end, '[G]oto [I]mplementation')
 
           -- Jump to the type of the word under your cursor.
           --  Useful when you're not sure what type a variable is and you want to see
           --  the definition of its *type*, not where it was *defined*.
-          map('gy', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
+          map('gy', function()
+            require('telescope.builtin').lsp_type_definitions(telescope_opts)
+          end, 'Type [D]efinition')
 
           -- Fuzzy find all the symbols in your current workspace
           --  Similar to document symbols, except searches over your whole project.
-          map('t', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+          map('t', function()
+            require('telescope.builtin').lsp_dynamic_workspace_symbols(telescope_opts)
+          end, '[W]orkspace [S]ymbols')
 
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
@@ -611,7 +630,6 @@ require('lazy').setup({
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
         clangd = {},
-        asm_lsp = {},
         rust_analyzer = {},
         csharp_ls = {
           handlers = {
