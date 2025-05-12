@@ -1069,13 +1069,52 @@ require('lazy').setup({
           args = { '--interpreter=vscode' }
         }
 
+        local previous_cs_env = nil
         dap.configurations.cs = {
           {
             type = "coreclr",
             name = "launch - netcoredbg",
             request = "launch",
             program = function()
-              return vim.fn.input('Path to dll: ', vim.fn.getcwd() .. '/bin/Debug/', 'file')
+              return vim.fn.input({
+                prompt = 'Path to dll: ',
+                default = vim.fn.getcwd(),
+                completion = 'file'
+              })
+            end,
+            env = {
+              -- HACK TO SHARE THE SAME VALUE FOR BOTH DOTNET_ENVIRONMENT AND ASPNETCORE_ENVIRONMENT
+              ASPNETCORE_ENVIRONMENT = function()
+                if previous_cs_env == nil then
+                  previous_cs_env = vim.fn.input({ prompt = "Environment: ", default = "Development" })
+                  return previous_cs_env
+                else
+                  local tmp = previous_cs_env
+                  previous_cs_env = nil
+                  return tmp
+                end
+              end,
+              DOTNET_ENVIRONMENT = function()
+                if previous_cs_env == nil then
+                  previous_cs_env = vim.fn.input({ prompt = "Environment: ", default = "Development" })
+                  return previous_cs_env
+                else
+                  local tmp = previous_cs_env
+                  previous_cs_env = nil
+                  return tmp
+                end
+              end,
+
+              ASPNETCORE_URLS = function()
+                return "http://localhost:7246;https://localhost:7256"
+              end,
+            },
+            cwd = function()
+              return vim.fn.input({
+                prompt = 'Working directory: ',
+                default = vim.fn.getcwd(),
+                completion = 'file'
+              })
             end,
           },
         }
@@ -1093,7 +1132,11 @@ require('lazy').setup({
             type = 'lldb',
             request = 'launch',
             program = function()
-              return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+              return vim.fn.input({
+                prompt = 'Path to executable: ',
+                default = vim.fn.getcwd() .. '/',
+                completion = 'file'
+              })
             end,
             cwd = '${workspaceFolder}/build',
             stopOnEntry = false,
