@@ -1007,6 +1007,8 @@ require('lazy').setup({
       config = function()
         require('glow').setup({
           style = "dark",
+          border = 'shadow',
+          pager = false,
           install_path = "/opt/homebrew/bin",
           glow_path = "/opt/homebrew/bin/glow",
           width = 9999,
