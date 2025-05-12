@@ -405,7 +405,6 @@ require('lazy').setup({
       vim.keymap.set('n', 'F', builtin.live_grep, { desc = 'Search by grep' })
       vim.keymap.set('n', '<leader>g', builtin.diagnostics, { desc = 'Open diagnostics' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-      vim.keymap.set('n', '<leader>i', builtin.lsp_implementations, { desc = 'Open [I]mplementations' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
