@@ -179,15 +179,6 @@ vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagn
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 vim.keymap.set('n', '<leader>G', '<cmd>LazyGit<cr>', { desc = 'Opens LazyGit', silent = true })
 
-vim.keymap.set('n', '<leader>T', function()
-  require('neo-tree.command').execute {
-    action = 'focus',      -- OPTIONAL, this is the default value
-    source = 'filesystem', -- OPTIONAL, this is the default value
-    position = 'left',     -- OPTIONAL, this is the default value
-    toggle = true,
-  }
-end, { desc = 'Open neo-tree at current file or working directory' })
-
 vim.keymap.set('n', '<leader>cf', function()
   vim.fn.setreg('+', vim.fn.expand('%:p'))
   print('Copied "' .. vim.fn.expand('%:p') .. '" to the clipboard')
@@ -965,6 +956,32 @@ require('lazy').setup({
         require('window-picker').setup({
           hint = 'floating-big-letter'
         })
+        require("neo-tree").setup({
+          sources = {
+            "filesystem",
+            "buffers",
+            "git_status",
+            "document_symbols",
+          },
+        })
+
+        vim.keymap.set('n', '<leader>T', function()
+          require('neo-tree.command').execute {
+            action = 'focus',
+            source = 'filesystem',
+            position = 'left',
+            toggle = true,
+          }
+        end, { desc = 'Open neo-tree at current file or working directory' })
+
+        vim.keymap.set('n', '<leader>C', function()
+          require('neo-tree.command').execute {
+            action = 'focus',
+            source = 'document_symbols',
+            position = 'left',
+            toggle = true,
+          }
+        end, { desc = 'Show current document symbols' })
       end
     },
     {
