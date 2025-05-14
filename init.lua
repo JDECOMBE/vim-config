@@ -1065,7 +1065,7 @@ require('lazy').setup({
         -- CSHARP
         dap.adapters.coreclr = {
           type = 'executable',
-          command = '/Users/jeremiahdecombe/DevPerso/netcoredbg/bin/netcoredbg',
+          command = vim.fn.expand('~/.dotnet/tools/netcoredbg/netcoredbg'),
           args = { '--interpreter=vscode' }
         }
 
