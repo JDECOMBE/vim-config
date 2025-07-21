@@ -277,6 +277,14 @@ require('lazy').setup({
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
       },
+      current_line_blame_opts = {
+        virt_text = true,
+        virt_text_pos = 'eol', -- 'eol' | 'overlay' | 'right_align'
+        delay = 0,
+        ignore_whitespace = false,
+        virt_text_priority = 100,
+        use_focus = true,
+      },
     },
   },
 
@@ -433,6 +441,7 @@ require('lazy').setup({
 
   { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
+    tag = "v1.8.0",
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
       { 'williamboman/mason.nvim', config = true }, -- NOTE: Must be loaded before dependants
@@ -479,6 +488,7 @@ require('lazy').setup({
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
       --    function will be executed to configure the current buffer
+
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
@@ -520,9 +530,9 @@ require('lazy').setup({
               width = 0.90
             },
             fname_width = 75,
-            include_declaration=false,
+            include_declaration = false,
             -- show_line=false,
-            trim_text=true
+            trim_text = true
           }
 
           -- Find references for the word under your cursor.
@@ -1249,6 +1259,9 @@ require('lazy').setup({
   },
   {
     'sindrets/diffview.nvim'
+  },
+  {
+    'tommcdo/vim-lion'
   }
 
   -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
