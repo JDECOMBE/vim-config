@@ -1076,9 +1076,12 @@ require('lazy').setup({
             name = "launch - netcoredbg",
             request = "launch",
             program = function()
+              local path = vim.fn.getcwd()
+              local current_folder_name = path:sub(path:find("/[^/]*$") + 1)
+              path = path .. "/bin/Debug/net8.0/" .. current_folder_name .. ".dll"
               return vim.fn.input({
                 prompt = 'Path to dll: ',
-                default = vim.fn.getcwd(),
+                default = path,
                 completion = 'file'
               })
             end,
