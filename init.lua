@@ -253,6 +253,7 @@ require('lazy').setup({
   {
     'numToStr/Comment.nvim',
     opts = {
+      ignore = "^$",
       toggler = {
         line = '<leader>kcc',
       },
