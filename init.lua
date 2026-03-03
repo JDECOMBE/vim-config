@@ -1089,7 +1089,7 @@ require('lazy').setup({
             program = function()
               local path = vim.fn.getcwd()
               local current_folder_name = path:sub(path:find("/[^/]*$") + 1)
-              path = path .. "/bin/Debug/net8.0/" .. current_folder_name .. ".dll"
+              path = path .. "/bin/Debug/net10.0/" .. current_folder_name .. ".dll"
               return vim.fn.input({
                 prompt = 'Path to dll: ',
                 default = path,
