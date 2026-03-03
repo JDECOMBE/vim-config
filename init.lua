@@ -1262,6 +1262,12 @@ require('lazy').setup({
     'sindrets/diffview.nvim'
   },
   {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    ft = { "markdown" },
+    build = function() vim.fn["mkdp#util#install"]() end,
+  },
+  {
     'tommcdo/vim-lion'
   }
 
